@@ -72,12 +72,12 @@ class NaiveBayesScratch:
         """
 
         y = np.asarray(y)
-        rows = []    
+        rows = []
         for bayesClass in self.classes_:
             mask = (y == bayesClass)
-            rows.append(X[mask].sum(axis=0))
+            rows.append(np.asarray(X[mask].sum(axis=0)).ravel())
 
-        counts = np.vstack(rows)
+        counts = np.asarray(np.vstack(rows), dtype=float)
         smoothed = counts + self.alpha
 
         row_totals = smoothed.sum(axis=1, keepdims=True)
@@ -90,7 +90,7 @@ class NaiveBayesScratch:
         y = np.asarray(y)
         self.classes_, counts = np.unique(y, return_counts=True)
         self.class_log_prior_ = np.log(counts / counts.sum())
-        self._feature_log_prob(X, y)
+        self.feature_log_prob_ = self._feature_log_prob(X, y)
         return self
 
     def predict_log_proba(self, X):

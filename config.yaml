@@ -21,11 +21,11 @@ features:                    # fitted on TRAINING text only
   max_features: null
 
 naive_bayes:
-  implementation: reference  # "reference" = provided scikit-learn baseline | "scratch" = YOUR implementation
-  alpha: 1.0                 # Laplace / add-alpha smoothing
+  implementation: scratch  # "reference" = provided scikit-learn baseline | "scratch" = YOUR implementation
+  alpha: .5              # Laplace / add-alpha smoothing
 
 svm:
-  C: 1.0                     # tune by cross-validation on TRAINING data only
+  C: 11.25                     # tune by cross-validation on TRAINING data only
 
 knn:
   ks: [1, 3, 5]              # as in the paper
@@ -37,7 +37,7 @@ kmeans:                      # exploratory clustering of the TF-IDF vectors (lab
   lsi_components: 50         # reduce with truncated SVD first
 
 evaluate:
-  cross_corpus: false        # exploratory: train on the main corpus, test on Enron-Spam (and the reverse)
+  cross_corpus: true        # exploratory: train on the main corpus, test on Enron-Spam (and the reverse)
   alpha_sweep: [0, 0.01, 0.1, 0.5, 1.0, 2.0]   # Naive Bayes smoothing sweep (alpha = 0 shows the zero-frequency problem)
 
 compare_to_reference: true   # when naive_bayes.implementation = scratch, also run the reference and report agreement
