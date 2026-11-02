@@ -16,6 +16,8 @@ Work in LOG space (products of thousands of small probabilities underflow) and n
 posteriors with the log-sum-exp trick.
 """
 from __future__ import annotations
+import numpy as np
+import scipy
 
 
 class NaiveBayesReference:
@@ -51,11 +53,16 @@ class NaiveBayesScratch:
 
     def __init__(self, alpha: float = 1.0):
         self.alpha = float(alpha)
+        self.classes_ = np.array(["ham", "spam"])
 
     # ---- the pieces to write, roughly in this order --------------------------------
     def _class_log_prior(self, y):
-        """Return log P(c) for each class (in the order of self.classes_)."""
-        raise NotImplementedError("compute log class priors from the label counts")
+        self.classes_, counts = np.unique(y, return_counts=True)
+        totalLines = np.sum(counts)
+        output = []
+        for i in range(len(counts)):
+            output.append(np.log(counts[i]/totalLines))
+        return np.asarray(output)
 
     def _feature_log_prob(self, X, y):
         """Return log theta of shape (n_classes, n_features) with add-alpha smoothing.
@@ -63,20 +70,42 @@ class NaiveBayesScratch:
         X may be a scipy sparse matrix or a dense array. Think about alpha = 0: what happens to
         a word that never occurs in a class? (Report it. Do not hide it.)
         """
-        raise NotImplementedError("sum the feature mass per class, smooth with alpha, take logs")
+
+        y = np.asarray(y)
+        rows = []    
+        for bayesClass in self.classes_:
+            mask = (y == bayesClass)
+            rows.append(X[mask].sum(axis=0))
+
+        counts = np.vstack(rows)
+        smoothed = counts + self.alpha
+
+        row_totals = smoothed.sum(axis=1, keepdims=True)
+        theta = smoothed / row_totals
+        return np.log(theta) #np.log(theta) will produce -inf, or nan for an all-zero row, with only a runtime warning
+
 
     def fit(self, X, y):
         """Estimate the parameters. Sets classes_, class_log_prior_, feature_log_prob_; returns self."""
-        raise NotImplementedError("learn the class priors and the per-class word log-probabilities")
+        y = np.asarray(y)
+        self.classes_, counts = np.unique(y, return_counts=True)
+        self.class_log_prior_ = np.log(counts / counts.sum())
+        self._feature_log_prob(X, y)
+        return self
 
     def predict_log_proba(self, X):
         """Return log P(c | x) for every row of X, shape (n_samples, n_classes), rows normalized
         so that exp(...) sums to 1. Use log space and log-sum-exp (scipy.special.logsumexp is fine)."""
-        raise NotImplementedError("joint log likelihood, then normalize in log space")
 
+        # log P(x | c) + log P(c)
+        joint = np.asarray(X @ self.feature_log_prob_.T + self.class_log_prior_)
+
+        # normalize: subtract log P(x)
+        return joint - scipy.special.logsumexp(joint, axis=1, keepdims=True)
+    
     def predict(self, X):
         """Return the most probable class label for each row of X."""
-        raise NotImplementedError("argmax over the joint log likelihood")
+        return self.classes_[np.argmax(self.predict_log_proba(X), axis=1)]
 
 
 def build_nb(cfg):

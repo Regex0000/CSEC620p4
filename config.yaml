@@ -2,7 +2,7 @@
 seed: 42
 
 data:
-  source: sample             # "sample" = tiny bundled corpus (debugging) | "file" = the real SMS Spam Collection
+  source: file             # "sample" = tiny bundled corpus (debugging) | "file" = the real SMS Spam Collection
                              # | "enron" = run the whole pipeline on Enron-Spam instead (see data/README.md)
   path: data/SMSSpamCollection
   enron_path: data/enron1    # extracted Enron-Spam folder with ham/ and spam/ (exploratory task)
